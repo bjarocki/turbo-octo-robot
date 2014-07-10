@@ -1,0 +1,50 @@
+{
+  "s3": {
+    "aws_access_key_id": "XXXXXXXXXXXXXXXXXXXXX",
+    "aws_secret_access_key": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "bucket_name": "you-bucket-name",
+    "http_base_url": "http://you-bucket-name.s3-website-us-east-1.amazonaws.com/"
+  },
+  "hipchat" : {
+    "room_id": 666,
+    "auth_token": "XXXXXXXXXXXXXXXXXXXX",
+    "message_from": "Deployment",
+    "message_format": "html",
+    "notify": "1"
+  },
+  "workflow": [
+        {
+            "title": "Login Page",
+            "url" : "https://app.datadoghq.com/",
+            "steps": [
+                { "action": "screenshot", "title": "Login Page" }
+            ]
+        },
+        {
+            "title": "Google auth",
+            "steps": [
+                { "action": "click", "on": "//button[contains(text(),'Google')]", "measure": "time", "title": "wait_for_oauth2" },
+                { "action": "clear", "on": "//input[@id='Email']" },
+                { "action": "clear", "on": "//input[@id='Passwd']" },
+                { "action": "send_keys", "on": "//input[@id='Email']", "what": "your_email" },
+                { "action": "send_keys", "on": "//input[@id='Passwd']", "what": "your_password" },
+                { "action": "click", "on": "//input[@id='signIn']", "measure": "time", "title": "google_login_clicked" },
+                { "action": "screenshot", "title": "Login via Google" }
+            ]
+        },
+        {
+            "title": "Infrastructure",
+            "url" : "https://app.datadoghq.com/infrastructure",
+            "steps": [
+                { "action": "screenshot", "title": "Infrastructure" }
+            ]
+        },
+        {
+            "title": "Sobotka Dashboard",
+            "url" : "https://app.datadoghq.com/dash/dash/1098?tile_size=m",
+            "steps": [
+                { "action": "screenshot", "title": "Sobotka Dash." }
+            ]
+        }
+    ]
+}
