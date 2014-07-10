@@ -1,4 +1,18 @@
 {
+  "preview": {
+    "browser_size": [1200, 1000],
+    "preview_size": [800, 300],
+    "fonts": {
+      "h1": {
+        "file": "h1.ttf",
+        "size": 14
+      },
+      "h2": {
+        "file": "h2.ttf",
+        "size": 10
+      }
+    }
+  },
   "s3": {
     "aws_access_key_id": "XXXXXXXXXXXXXXXXXXXXX",
     "aws_secret_access_key": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
