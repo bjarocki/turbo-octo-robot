@@ -28,8 +28,8 @@ class Hipchat:
 
 # this class provides simple phantomjs/selenium tasks support
 class DataDogTests:
-    def __init__(self):
-        self.window_size = (1400, 1000)
+    def __init__(self, configuration):
+        self.window_size = configuration['browser_size']
         #self._setup_display()
         self.user_agent = (
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) ' +
@@ -63,6 +63,7 @@ class DataDogTests:
     def go(self, flow):
         self.measure = {}
         for task in flow:
+            print('Doing: {0}'.format(task['title']))
             self._measure_time(task['title'])
 
             if 'url' in task:
@@ -97,19 +98,20 @@ class DataDogTests:
 
 # Generate thumbnail from images tuples (image_data, description text)
 class DataDogPreview:
-    def __init__(self, images, measure_results, bucket):
+    def __init__(self, images, measure_results, bucket, configuration):
         try:
             self.s3_bucket = bucket
             self.s3_base_url = 'http://dd-deployment-snapshots.s3-website-us-east-1.amazonaws.com/'
             self.file_name = '{0}.png'.format(str(uuid.uuid4()))
-            self.preview_max_size = (700, 300)
+            self.preview_max_size = configuration['preview_size']
             self.preview_format = 'PNG'
             self.s3_content_type = 'image/png'
             self.images = images
             self.measure_results = measure_results
-            self.font_filename = 'Avenir.ttc'
-            self.font_h1_size = 14
-            self.font_h2_size = 10
+            self.font_h1_filename = configuration['fonts']['h1']['file']
+            self.font_h2_filename = configuration['fonts']['h2']['file']
+            self.font_h1_size = configuration['fonts']['h1']['size']
+            self.font_h2_size = configuration['fonts']['h2']['size']
 
             self._load_images()
         except Exception as e:
@@ -118,8 +120,8 @@ class DataDogPreview:
     def _text_on_image(self, image, text):
         start_from = (self.preview_max_size[1] - 25 - ((len(text) - 1) * 16))
         draw = ImageDraw.Draw(image)
-        font_h1 = ImageFont.truetype(self.font_filename, self.font_h1_size)
-        font_h2 = ImageFont.truetype(self.font_filename, self.font_h2_size)
+        font_h1 = ImageFont.truetype(self.font_h1_filename, self.font_h1_size)
+        font_h2 = ImageFont.truetype(self.font_h2_filename, self.font_h2_size)
         draw.text((5, start_from), text[0], (0,0,0), font=font_h1)
         text.pop(0)
         start_from += 20
@@ -195,14 +197,14 @@ if __name__ == '__main__':
         s3 = boto.connect_s3(configuration['s3']['aws_access_key_id'], configuration['s3']['aws_secret_access_key'])
         b = s3.get_bucket(configuration['s3']['bucket_name'])
 
-        t = DataDogTests()
+        t = DataDogTests(configuration['preview'])
         screenshots, measure_results = t.go(configuration['workflow'])
         t.quit()
 
         if not len(screenshots):
             sys.exit(1)
 
-        p = DataDogPreview(screenshots, measure_results, b)
+        p = DataDogPreview(screenshots, measure_results, b, configuration['preview'])
         url = p.upload()
         h = Hipchat(configuration['hipchat'])
         h.send("<img src='{0}'>".format(url), 'green')
