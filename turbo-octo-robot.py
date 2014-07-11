@@ -1,4 +1,5 @@
 #from pyvirtualdisplay import Display
+from qrcode import *
 import requests, uuid, json, boto, sys, StringIO, time
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from selenium import webdriver
@@ -129,6 +130,24 @@ class DataDogPreview:
             draw.text((5, start_from), ' - {0}'.format(row), (0,0,0), font=font_h2)
             start_from += 14
 
+    def _qrcode(self, text):
+        transparent = []
+        qr = QRCode(version=None, box_size=2, border=0, error_correction=ERROR_CORRECT_L)
+        qr.add_data(text)
+        qr.make()
+        im = qr.make_image()
+        im = im.convert("RGBA")
+        pixels = im.getdata()
+
+        for pixel in pixels:
+            if pixel == (255, 255, 255, 255):
+                transparent.append((255, 255, 255, 0))
+            else:
+                transparent.append(pixel)
+
+        im.putdata(transparent)
+        return im
+
     def _prepare_text(self, task_id, info):
         text = []
         # is there anything we should put on the screenshot?
@@ -168,6 +187,9 @@ class DataDogPreview:
             self._text_on_image(im, self._prepare_text(info['task_id'], info))
             self.preview.paste(im, (im.size[0] * image_no, 0))
             image_no += 1
+
+        qrimage = self._qrcode('https://app.datadoghq.com/event/stream')
+        self.preview.paste(qrimage, (5, int(self.preview_max_size[1]*(4/float(6))))) #XXX this 4/6 of hight is ugly, fix it!
 
     def _fade_out(self, image):
         pixels = image.load()
