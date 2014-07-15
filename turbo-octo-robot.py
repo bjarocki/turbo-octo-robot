@@ -131,19 +131,20 @@ class DataDogPreview:
             start_from += 14
 
     def _qrcode(self, text):
-        transparent = []
-        qr = QRCode(version=None, box_size=2, border=0, error_correction=ERROR_CORRECT_L)
+        qr = QRCode(version=None, box_size=1, border=0, error_correction=ERROR_CORRECT_L)
         qr.add_data(text)
         qr.make()
+        
         im = qr.make_image()
         im = im.convert("RGBA")
         pixels = im.getdata()
-
+        
+        transparent = []
         for pixel in pixels:
             if pixel == (255, 255, 255, 255):
                 transparent.append((255, 255, 255, 0))
             else:
-                transparent.append(pixel)
+                transparent.append((pixel[0], pixel[1], pixel[2], 200))
 
         im.putdata(transparent)
         return im
@@ -165,7 +166,7 @@ class DataDogPreview:
     def _load_images(self):
         # prepare empty transparent preview image
         self.preview = Image.new('RGB', self.preview_max_size, (255, 255, 255))
-        self.preview.putalpha(255)
+        self.preview.putalpha(0)
         image_no = 0
 
         for image in self.images:
@@ -188,14 +189,14 @@ class DataDogPreview:
             self.preview.paste(im, (im.size[0] * image_no, 0))
             image_no += 1
 
-        qrimage = self._qrcode('https://app.datadoghq.com/event/stream')
-        self.preview.paste(qrimage, (5, int(self.preview_max_size[1]*(4/float(6))))) #XXX this 4/6 of hight is ugly, fix it!
+        qrimage = self._qrcode('This would be a nice feature for TV dashboard where you can get some more data by checking this QRCode')
+        self.preview.paste(qrimage, (self.preview_max_size[0] - qrimage.size[0], self.preview_max_size[1] - qrimage.size[1]), mask=qrimage)
 
     def _fade_out(self, image):
         pixels = image.load()
         width, height = image.size
-        for y in range(int(height*.85), int(height)):
-            alpha = 255-int((y - height*.85)/height/.15 * 255)
+        for y in range(int(height*.80), int(height)):
+            alpha = 255-int((y - height*.80)/height/.20 * 255)
             for x in range(width):
                 pixels[x, y] = pixels[x, y][:3] + (alpha,)
 
@@ -228,6 +229,7 @@ if __name__ == '__main__':
 
         p = DataDogPreview(screenshots, measure_results, b, configuration['preview'])
         url = p.upload()
+        print(url)
         h = Hipchat(configuration['hipchat'])
         h.send("<img src='{0}'>".format(url), 'green')
         #h.send("<a href='{0}'>More details about this jenkins job</a>".format('href="http://bastion.datad0g.com:8080/job/deploy-dogweb-hotfix/1737/'), 'green')
