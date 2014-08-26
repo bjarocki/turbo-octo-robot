@@ -1,4 +1,3 @@
-#from pyvirtualdisplay import Display
 from qrcode import *
 import requests, uuid, json, boto, sys, StringIO, time
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
@@ -31,7 +30,6 @@ class Hipchat:
 class DataDogTests:
     def __init__(self, configuration):
         self.window_size = configuration['browser_size']
-        #self._setup_display()
         self.user_agent = (
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) ' +
             'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36'
@@ -39,7 +37,6 @@ class DataDogTests:
         self.dcap = dict(DesiredCapabilities.PHANTOMJS)
         self.dcap["phantomjs.page.settings.userAgent"] = self.user_agent
         self.driver = webdriver.PhantomJS(desired_capabilities=self.dcap)
-        #self.driver = webdriver.Firefox()
         self.driver.set_window_size(self.window_size[0], self.window_size[1])
         self.screenshots = []
 
@@ -94,7 +91,6 @@ class DataDogTests:
         return (self.screenshots, self.measure)
 
     def quit(self):
-        #self.display.stop()
         self.driver.quit()
 
 # Generate thumbnail from images tuples (image_data, description text)
@@ -134,11 +130,9 @@ class DataDogPreview:
         qr = QRCode(version=None, box_size=1, border=0, error_correction=ERROR_CORRECT_L)
         qr.add_data(text)
         qr.make()
-        
         im = qr.make_image()
         im = im.convert("RGBA")
         pixels = im.getdata()
-        
         transparent = []
         for pixel in pixels:
             if pixel == (255, 255, 255, 255):
@@ -229,12 +223,10 @@ if __name__ == '__main__':
 
         p = DataDogPreview(screenshots, measure_results, b, configuration['preview'])
         url = p.upload()
-        print(url)
         h = Hipchat(configuration['hipchat'])
         h.send("<img src='{0}'>".format(url), 'green')
-        #h.send("<a href='{0}'>More details about this jenkins job</a>".format('href="http://bastion.datad0g.com:8080/job/deploy-dogweb-hotfix/1737/'), 'green')
 
     except Exception as e:
-        print(str(e))
+        raise
         sys.exit(1)
 
